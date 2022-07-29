@@ -7,41 +7,42 @@ import br.ce.wcaquino.exception.FilmeSemEstoqueException;
 import br.ce.wcaquino.exception.LocadoraException;
 
 import java.util.Date;
+import java.util.List;
 
 import static br.ce.wcaquino.utils.DataUtils.adicionarDias;
 
 public class LocacaoService {
-	
-	public Locacao alugarFilme(Usuario usuario, Filme filme) throws FilmeSemEstoqueException,LocadoraException {
+
+	public Locacao alugarFilme(Usuario usuario, List<Filme> filmes) throws FilmeSemEstoqueException,LocadoraException {
 
 
 		if(usuario == null){
 			throw new LocadoraException("Usuário vazio");
 		}
 
-		if(filme == null){
+		if(filmes == null || filmes.isEmpty()){
 			throw new LocadoraException("Filme vazio");
 		}
 
-		if(filme.getEstoque() == 0){
+		if(filmes.stream().map(Filme::getEstoque).anyMatch(estoque -> estoque == 0)){
 			throw new FilmeSemEstoqueException();
 		}
 
 		Locacao locacao = new Locacao();
 
-		locacao.setFilme(filme);
+		locacao.setFilme(filmes);
 		locacao.setUsuario(usuario);
 		locacao.setDataLocacao(new Date());
-		locacao.setValor(filme.getPrecoLocacao());
+		locacao.setValor(filmes.stream().map(Filme::getPrecoLocacao).mapToDouble(s -> Double.parseDouble(s.toString())).sum());
 
 		//Entrega no dia seguinte
 		Date dataEntrega = new Date();
 		dataEntrega = adicionarDias(dataEntrega, 1);
 		locacao.setDataRetorno(dataEntrega);
-		
-		//Salvando a locacao...	
+
+		//Salvando a locacao...
 		//TODO adicionar método para salvar
-		
+
 		return locacao;
 	}
 
